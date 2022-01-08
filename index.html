@@ -1,0 +1,137 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEAT HIM</title>
+    <style>
+        #howmany, #ready {
+        color:yellow;
+        font-size: 30px;
+        background-color:red;
+        }
+    </style>
+</head>
+<body>
+    <p style="color : cyan; font-size : 24px;"> 
+        RELEASE THE STRESS 
+    </p>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div id="ready">Ready?  : </div>
+    <div id="howmany">Score : </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/JjN4JnVXk/";
+    
+    let model, webcam, labelContainer, maxPredictions;
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext('2d');
+    
+    let kim = new Image();
+    kim.src = "kim.jpg";
+    let deadkim = new Image();
+    deadkim.src = "dead_kim.jpg";
+    kim.onload = function() {
+    ctx.drawImage(kim, 0, 0, 500, 500);
+    }
+    let korean = new Audio('korean.m4a');
+    init();
+
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmPose.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Convenience function to setup a webcam
+        const size = 200;
+        const flip = true; // whether to flip the webcam
+        webcam = new tmPose.Webcam(size, size, flip); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+        korean.play();
+    }
+
+    async function loop(timestamp) {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    let ready = 0;
+    let howmany = 0;
+    let status = "standing";
+    let YouAreReady = new Audio('ready.m4a');
+
+    async function predict() {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+
+        document.getElementById("ready").innerHTML="Ready? : "+ready;
+        document.getElementById("howmany").innerHTML="Score : "+howmany; // 점수 출력
+        
+        while(ready<10){ // 모션 인식 준비완료 check
+            if(prediction[2].probability.toFixed(2) > 0.9) ready++;
+            else ready = 0;
+            if(ready>=10){
+                YouAreReady.play(); 
+                document.getElementById("ready").innerHTML="Fire!";
+            }
+        }
+
+        if(prediction[0].probability.toFixed(2) > 0.8) { // 좌 펀치?
+            if(status == "standing"||status == "right_punch"||status == "sidekick") { // 전 상태가 좌 펀치가 아니면
+            howmany++
+            beat();
+            }
+            status = "left_punch"
+        } 
+        else if(prediction[1].probability.toFixed(2) > 0.8) { // 우 펀치?
+            status = "right_punch"
+            if(status == "standing"||status == "left_punch"||status == "sidekick") { // 전 상태가 우 펀치가 아니면
+                howmany++
+                beat();        
+            }
+            status = "right_punch"
+        } 
+        else if(prediction[2].probability.toFixed(2) > 0.8) { // 서있는 자세?
+            status = "standing"
+        } 
+        else if(prediction[3].probability.toFixed(2) > 0.8) { // 발차기?
+            if(status == "standing"||status == "left_punch"||status =="right_punch") { // 전 상태가 발차기가 아니면
+                status = "sidekick"
+                howmany+=10
+                beat();
+            }
+            status = "sidekick"
+        }
+    }
+
+    async function beat() {
+        let sidekick = new Audio('sidekick.mp3');
+        let beating1 = new Audio('beating1.mp3');
+        let beating2 = new Audio('beating2.mp3');
+        let blood = new Image();
+        blood.src = "blood.png";
+        let random = Math.floor(Math.random() * 200);
+
+        if(Math.random()<0.5) 
+        beating1.play(); 
+        else 
+        beating2.play();
+        if(status=="sidekick") sidekick.play();
+
+        ctx.drawImage(blood, 100+random, random-50, 250, 250);
+
+        setTimeout(function(){
+            ctx.clearRect(100+random, random-50, 250, 250);
+            if(howmany <= 20) ctx.drawImage(kim, 0, 0, 500, 500); // 타격 점수 20점 이하면 피 지우기
+            else ctx.drawImage(deadkim, 0, 0, 500, 500); // 타격 점수 20점 넘었으면 피 지우고 영정 사진
+        }, 600); // 이 함수를 피가 터지고 0.6초 뒤에 실행
+    }
+</script>
+</body>
+</html>
