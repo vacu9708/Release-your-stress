@@ -5,7 +5,7 @@
 
 ## 📺Video : https://youtu.be/36qoJf4z3SA
 ---
-When I was a sophomore my professor told me there was a comfortable tool that helps make AI easily. I got interested and thought what I could make with it. I decided to make a deep learning sandbag with it. Though I used a comfortable tool to implement deep learning at the time, I'd like to study machine learning enough and make a better deep learning sandbag on my own soon.
+When I was a sophomore my professor told me that there was a comfortable tool that helped utilize AI easily. I got interested and thought what I could make with it. I decided to make a deep learning sandbag with it. Though I used a comfortable tool to implement deep learning at the time, I'd like to study machine learning enough and make a better deep learning sandbag on my own soon.
 
 ## How to play
 * Set your position so that the camera can recognize you and wait.
